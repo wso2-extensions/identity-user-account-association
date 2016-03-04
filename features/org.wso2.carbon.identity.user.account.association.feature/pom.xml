@@ -20,7 +20,7 @@
 
     <parent>
         <groupId>org.wso2.carbon.identity</groupId>
-        <artifactId>identity-usermgt-account-association</artifactId>
+        <artifactId>identity-user-account-association</artifactId>
         <relativePath>../../pom.xml</relativePath>
         <version>5.0.9-SNAPSHOT</version>
     </parent>
@@ -36,11 +36,13 @@
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.user.account.association.server.feature</artifactId>
+            <version>${project.version}</version>
             <type>zip</type>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.user.account.association.ui.feature</artifactId>
+            <version>${project.version}</version>
             <type>zip</type>
         </dependency>
     </dependencies>

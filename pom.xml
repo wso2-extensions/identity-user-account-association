@@ -25,7 +25,7 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>identity-usermgt-account-association</artifactId>
+    <artifactId>identity-user-account-association</artifactId>
     <packaging>pom</packaging>
     <name>WSO2 Carbon User Account Association Module</name>
     <description>
