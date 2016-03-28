@@ -20,10 +20,10 @@ package org.wso2.carbon.identity.user.account.association.internal;
 import org.wso2.carbon.identity.user.account.association.dao.UserAccountAssociationDAO;
 import org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException;
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants;
-import org.wso2.carbon.identity.user.store.configuration.listener.UserStoreConfigListener;
+import org.wso2.carbon.identity.user.store.configuration.listener.AbstractUserStoreConfigListener;
 import org.wso2.carbon.user.api.UserStoreException;
 
-public class UserStoreConfigListenerImpl implements UserStoreConfigListener {
+public class UserStoreConfigListenerImpl extends AbstractUserStoreConfigListener {
 
     @Override
     public void onUserStoreNamePreUpdate(int tenantId, String currentUserStoreName,
@@ -40,11 +40,6 @@ public class UserStoreConfigListenerImpl implements UserStoreConfigListener {
     }
 
     @Override
-    public void onUserStoreNamePostUpdate(int i, String s, String s2) throws UserStoreException {
-
-    }
-
-    @Override
     public void onUserStorePreDelete(int tenantId, String userStoreName) throws UserStoreException {
 
         try {
@@ -54,10 +49,5 @@ public class UserStoreConfigListenerImpl implements UserStoreConfigListener {
                                                                .ERROR_WHILE_DELETING_ASSOC_FROM_DOMAIN.getDescription(),
                                                        userStoreName), e);
         }
-    }
-
-    @Override
-    public void onUserStorePostDelete(int i, String s) throws UserStoreException {
-
     }
 }
