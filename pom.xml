@@ -21,12 +21,13 @@
     <parent>
         <groupId>org.wso2.carbon.identity</groupId>
         <artifactId>identity-extension-parent</artifactId>
-        <version>5.0.9-SNAPSHOT</version>
+        <version>5.1.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>identity-user-account-association</artifactId>
     <packaging>pom</packaging>
+    <version>5.0.9-SNAPSHOT</version>
     <name>WSO2 Carbon User Account Association Module</name>
     <description>
 
