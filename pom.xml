@@ -114,6 +114,10 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <properties>
+        <wss4j.xml.security.imp.pkg.version.range>[1.4.2.patched,2.0.0)</wss4j.xml.security.imp.pkg.version.range>
+    </properties>
+
     <modules>
         <module>components/org.wso2.carbon.identity.user.account.association</module>
         <module>components/org.wso2.carbon.identity.user.account.association.stub</module>
