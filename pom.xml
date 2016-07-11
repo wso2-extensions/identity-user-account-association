@@ -325,7 +325,7 @@
         <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
 
         <wss4j.xml.security.imp.pkg.version.range>[1.4.2.patched,2.0.0)</wss4j.xml.security.imp.pkg.version.range>
-        <carbon.identity.framework.version>5.2.1-SNAPSHOT</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.2.0</carbon.identity.framework.version>
         <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
         <axiom.wso2.version>1.2.11.wso2v10</axiom.wso2.version>
 
