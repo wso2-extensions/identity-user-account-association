@@ -125,18 +125,18 @@
                             org.wso2.carbon.user.api; version="${carbon.user.api.imp.pkg.version.range}",
                             org.wso2.carbon.registry.core.*; version="${carbon.kernel.registry.imp.pkg.version}",
                             org.wso2.carbon.identity.application.common.*;
-                            version="${carbon.identity.package.import.version.range}",
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.base;
-                            version="${carbon.identity.package.import.version.range}",
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.core.*;
-                            version="${carbon.identity.package.import.version.range}",
+                            version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.user.store.configuration.*;
-                            version="${carbon.identity.package.import.version.range}"
+                            version="${carbon.identity.framework.imp.pkg.version.range}"
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.user.account.association.internal,
                             org.wso2.carbon.identity.user.account.association.*;
-                            version="${carbon.identity.package.export.version}"
+                            version="${identity.user.account.association.exp.pkg.version}"
                         </Export-Package>
                     </instructions>
                 </configuration>
