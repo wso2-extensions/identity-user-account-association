@@ -168,22 +168,22 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
-                <version>${identity.framework.version}</version>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.base</artifactId>
-                <version>${identity.framework.version}</version>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.application.common</artifactId>
-                <version>${identity.framework.version}</version>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.user.store.configuration</artifactId>
-                <version>${identity.framework.version}</version>
+                <version>${carbon.identity.framework.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.commons</groupId>
@@ -193,22 +193,24 @@
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.user.account.association.stub</artifactId>
-                <version>${identity.user.account.association.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.user.account.association</artifactId>
-                <version>${identity.user.account.association.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.user.account.association.server.feature</artifactId>
-                <version>${identity.user.account.association.version}</version>
+                <version>${project.version}</version>
+                <type>zip</type>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.user.account.association.ui.feature</artifactId>
-                <version>${identity.user.account.association.version}</version>
+                <version>${project.version}</version>
+                <type>zip</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -293,8 +295,7 @@
 
     <properties>
         <!-- Project Version -->
-        <identity.user.account.association.version>${project.version}</identity.user.account.association.version>
-        <identity.user.account.association.exp.pkg.version>${identity.user.account.association.version}</identity.user.account.association.exp.pkg.version>
+        <identity.user.account.association.exp.pkg.version>${project.version}</identity.user.account.association.exp.pkg.version>
         <identity.user.account.association.imp.pkg.version>[5.0.0, 6.0.0)</identity.user.account.association.imp.pkg.version>
 
         <!-- Carbon kernel version -->
@@ -323,15 +324,15 @@
         <commons-logging.osgi.version.range>[1.2,2.0)</commons-logging.osgi.version.range>
         <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
 
-        <!-- Misc -->
-        <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
-
         <wss4j.xml.security.imp.pkg.version.range>[1.4.2.patched,2.0.0)</wss4j.xml.security.imp.pkg.version.range>
-        <identity.framework.version>5.2.1-SNAPSHOT</identity.framework.version>
+        <carbon.identity.framework.version>5.2.1-SNAPSHOT</carbon.identity.framework.version>
         <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
         <axiom.wso2.version>1.2.11.wso2v10</axiom.wso2.version>
 
-
+        <maven.scr.plugin.version>1.7.2</maven.scr.plugin.version>
+        <maven.bundle.plugin.version>2.4.0</maven.bundle.plugin.version>
+        <maven.compiler.plugin.version>2.3.1</maven.compiler.plugin.version>
+        <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
     </properties>
 
