@@ -312,7 +312,7 @@
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
 
         <!-- Carbon Commons Version -->
-        <carbon.commons.version>4.5.2</carbon.commons.version>
+        <carbon.commons.version>4.5.4</carbon.commons.version>
 
         <!--Axis2 Version -->
         <axis2.osgi.version.range>[1.6.1.wso2v12, 2.0.0)</axis2.osgi.version.range>
