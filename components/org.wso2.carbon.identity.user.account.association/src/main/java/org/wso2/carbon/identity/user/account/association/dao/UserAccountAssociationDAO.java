@@ -128,7 +128,7 @@ public class UserAccountAssociationDAO {
         if (associationKey != null) {
             try (Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
                  PreparedStatement preparedStatement = dbConnection.prepareStatement(UserAccountAssociationConstants
-                         .SQLQueries.LIST_USER_ACCOUNT_ASSOCIATIONS);) {
+                         .SQLQueries.LIST_USER_ACCOUNT_ASSOCIATIONS)) {
 
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 preparedStatement.setString(1, associationKey);
@@ -153,8 +153,8 @@ public class UserAccountAssociationDAO {
                     }
                 }
             } catch (SQLException e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .CONN_DELETE_DB_ERROR.getDescription(), e);
+                throw new UserAccountAssociationServerException(String.format(UserAccountAssociationConstants.ErrorMessages
+                        .ERROR_WHILE_RETRIEVING_ASSOC_OF_USER.getDescription(), userName), e);
             } catch (UserStoreException e) {
                 throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
                         .ERROR_WHILE_GETTING_TENANT_NAME.getDescription(), e);
@@ -242,7 +242,7 @@ public class UserAccountAssociationDAO {
 
         try (Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
              PreparedStatement preparedStatement = dbConnection.prepareStatement(UserAccountAssociationConstants
-                     .SQLQueries.IS_VALID_ASSOCIATION);) {
+                     .SQLQueries.IS_VALID_ASSOCIATION)) {
 
             preparedStatement.setInt(1, tenantId);
             preparedStatement.setString(2, domainName);
