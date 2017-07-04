@@ -70,7 +70,9 @@ public class UserAccountAssociationConstants {
         ERROR_WHILE_UPDATING_ASSOC_DOMAIN(8536, "Error occurred while updating user domain of account associations" +
                                                 " with domain '%s'"),
         ERROR_WHILE_DELETING_ASSOC_FROM_DOMAIN(8537, "Error occurred while deleting user account associations with " +
-                                                     "domain '%s'");
+                                                     "domain '%s'"),
+        ERROR_WHILE_RETRIEVING_ASSOC_OF_USER(8538, "Database error occurred while retrieving account associations of " +
+                "user %s");
 
         private final int code;
         private final String description;
