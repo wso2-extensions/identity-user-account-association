@@ -58,4 +58,7 @@ public interface UserAccountConnector {
      */
     boolean switchLoggedInUser(String userName) throws UserAccountAssociationException;
 
+    default void createUserAccountAssociation(String userName, char[] password) throws UserAccountAssociationException {
+        throw new UserAccountAssociationException("This is not implemented");
+    }
 }

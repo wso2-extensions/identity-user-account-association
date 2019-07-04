@@ -46,12 +46,12 @@ import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 public class UserAccountConnectorImpl implements UserAccountConnector {
 
@@ -90,8 +90,8 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
             String user2Domain = IdentityUtil.extractDomainFromName(tenantAwareUsername2);
             String username1WithoutDomain = UserAccountAssociationUtil.getUsernameWithoutDomain(tenantAwareUsername1);
             String username2WithoutDomain = UserAccountAssociationUtil.getUsernameWithoutDomain(tenantAwareUsername2);
-            int user1Tenant = MultitenantConstants.INVALID_TENANT_ID;
-            int user2Tenant = MultitenantConstants.INVALID_TENANT_ID;
+            int user1Tenant;
+            int user2Tenant;
             try {
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 user1Tenant = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName1));
@@ -174,6 +174,60 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                     .toString());
         }
 
+    }
+
+    public void createUserAccountAssociation(String userName, char[] password) throws
+            UserAccountAssociationException {
+
+        String loggedInUser = UserCoreUtil.addTenantDomainToEntry(CarbonContext.getThreadLocalCarbonContext()
+                .getUsername(), CarbonContext.getThreadLocalCarbonContext().getTenantDomain());
+
+        org.wso2.carbon.user.api.UserRealm userRealm;
+        RealmService realmService;
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(userName);
+        int tenantId;
+        try {
+            realmService = IdentityAccountAssociationServiceComponent.getRealmService();
+            tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
+        } catch (UserStoreException e) {
+            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
+                    .ERROR_WHILE_GETTING_TENANT_ID
+                    .getDescription(), e);
+        } catch (Exception e) {
+            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
+                    .ERROR_WHILE_LOADING_REALM_SERVICE
+                    .getDescription(), e);
+        }
+
+        if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
+                        .getDescription(), MultitenantUtils.getTenantDomain(userName)));
+            }
+            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
+                    .INVALID_TENANT_DOMAIN.toString());
+        }
+        boolean authentic;
+        try {
+            userRealm = realmService.getTenantUserRealm(tenantId);
+            authentic = userRealm.getUserStoreManager().authenticate(tenantAwareUsername, String.valueOf(password));
+            userName = UserCoreUtil.addDomainToName(userName, UserCoreUtil.getDomainFromThreadLocal());
+        } catch (UserStoreException e) {
+            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
+                    .ERROR_WHILE_AUTHENTICATING_USER
+                    .getDescription(), e);
+        }
+
+        if (!authentic) {
+            if (log.isDebugEnabled()) {
+                log.debug(UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC.getDescription());
+
+            }
+            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
+                    .USER_NOT_AUTHENTIC.toString());
+        }
+
+        UserAccountConnectorImpl.getInstance().createUserAccountAssociation(loggedInUser, userName);
     }
 
     /**
