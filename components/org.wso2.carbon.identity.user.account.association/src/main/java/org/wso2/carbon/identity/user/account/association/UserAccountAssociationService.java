@@ -52,55 +52,8 @@ public class UserAccountAssociationService extends AbstractAdmin {
     public void createUserAccountAssociation(String userName, char[] password) throws
             UserAccountAssociationClientException {
 
-        String loggedInUser = UserCoreUtil.addTenantDomainToEntry(CarbonContext.getThreadLocalCarbonContext()
-                .getUsername(), CarbonContext.getThreadLocalCarbonContext().getTenantDomain());
-
-        org.wso2.carbon.user.api.UserRealm userRealm;
-        RealmService realmService;
-        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(userName);
-        int tenantId;
         try {
-            realmService = IdentityAccountAssociationServiceComponent.getRealmService();
-            tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
-        } catch (UserStoreException e) {
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_GETTING_TENANT_ID
-                    .getDescription(), e);
-        } catch (Exception e) {
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_LOADING_REALM_SERVICE
-                    .getDescription(), e);
-        }
-
-        if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
-                        .getDescription(), MultitenantUtils.getTenantDomain(userName)));
-            }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .INVALID_TENANT_DOMAIN.toString());
-        }
-        boolean authentic;
-        try {
-            userRealm = realmService.getTenantUserRealm(tenantId);
-            authentic = userRealm.getUserStoreManager().authenticate(tenantAwareUsername, String.valueOf(password));
-            userName = UserCoreUtil.addDomainToName(userName, UserCoreUtil.getDomainFromThreadLocal());
-        } catch (UserStoreException e) {
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_AUTHENTICATING_USER
-                    .getDescription(), e);
-        }
-
-        if (!authentic) {
-            if (log.isDebugEnabled()) {
-                log.debug(UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC.getDescription());
-
-            }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .USER_NOT_AUTHENTIC.toString());
-        }
-        try {
-            UserAccountConnectorImpl.getInstance().createUserAccountAssociation(loggedInUser, userName);
+            UserAccountConnectorImpl.getInstance().createUserAccountAssociation(userName, password);
         } catch (UserAccountAssociationServerException e) {
             log.error(UserAccountAssociationConstants.ErrorMessages.ACCOUNT_CONNECTING_ERROR.getDescription(), e);
             throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
