@@ -26,7 +26,15 @@ public class UserAccountAssociationClientException extends UserAccountAssociatio
         super(message);
     }
 
+    public UserAccountAssociationClientException(String errorCode, String message) {
+        super(errorCode, message);
+    }
+
     public UserAccountAssociationClientException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public UserAccountAssociationClientException(String errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
     }
 }

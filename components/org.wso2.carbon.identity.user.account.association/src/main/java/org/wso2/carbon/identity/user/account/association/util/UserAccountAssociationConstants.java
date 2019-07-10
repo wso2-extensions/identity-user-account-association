@@ -72,7 +72,8 @@ public class UserAccountAssociationConstants {
         ERROR_WHILE_DELETING_ASSOC_FROM_DOMAIN(8537, "Error occurred while deleting user account associations with " +
                                                      "domain '%s'"),
         ERROR_WHILE_RETRIEVING_ASSOC_OF_USER(8538, "Database error occurred while retrieving account associations of " +
-                "user %s");
+                "user %s"),
+        ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user");
 
         private final int code;
         private final String description;

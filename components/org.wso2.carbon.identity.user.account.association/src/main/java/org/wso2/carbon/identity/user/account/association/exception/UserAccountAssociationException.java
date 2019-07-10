@@ -28,7 +28,15 @@ public class UserAccountAssociationException extends IdentityException {
         super(message);
     }
 
+    public UserAccountAssociationException(String errorCode, String message) {
+        super(errorCode, message);
+    }
+
     public UserAccountAssociationException(String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public UserAccountAssociationException(String errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
     }
 }

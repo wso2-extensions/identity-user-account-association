@@ -53,6 +53,21 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ALREADY_CONNECTED;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_RETRIEVING_TENANT_ID_OF_USER;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_ACCESSING_REALM_SERVICE;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_AUTHENTICATING_USER;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_EXECUTING_AUTHENTICATORS;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_GETTING_TENANT_ID;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_LOADING_REALM_SERVICE;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_RETRIEVING_REMOTE_ADDRESS;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_UPDATING_SESSION;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_ASSOCIATION;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_TENANT_DOMAIN;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.SAME_ACCOUNT_CONNECTING_ERROR;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC;
+
 public class UserAccountConnectorImpl implements UserAccountConnector {
 
     private static final Log log = LogFactory.getLog(UserAccountConnectorImpl.class);
@@ -96,43 +111,45 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 user1Tenant = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName1));
                 user2Tenant = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName2));
+                boolean user1Exists = realmService.getTenantUserRealm(user1Tenant).getUserStoreManager().isExistingUser(tenantAwareUsername1);
+                boolean user2Exists = realmService.getTenantUserRealm(user2Tenant).getUserStoreManager()
+                        .isExistingUser(tenantAwareUsername2);
+                if (!user1Exists || !user2Exists) {
+                    logWarnMessage(userName1, userName2, user1Exists, user2Exists);
+                    return;
+                }
 
             } catch (UserStoreException e) {
-                throw new UserAccountAssociationClientException("Error while retrieving tenant ID of user", e);
+                throw handleUserAccountAssociationClientException(ERROR_RETRIEVING_TENANT_ID_OF_USER, null, true);
             }
             if (MultitenantConstants.INVALID_TENANT_ID == user1Tenant) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
                             .getDescription(), MultitenantUtils.getTenantDomain(userName1)));
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .INVALID_TENANT_DOMAIN.toString());
+                throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
             }
             if (MultitenantConstants.INVALID_TENANT_ID == user2Tenant) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
                             .getDescription(), MultitenantUtils.getTenantDomain(userName2)));
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .INVALID_TENANT_DOMAIN.toString());
+                throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
             }
             if (username1WithoutDomain.equals(username2WithoutDomain) && user1Domain.equals(user2Domain) &&
                     user1Tenant == user2Tenant) {
                 if (log.isDebugEnabled()) {
-                    log.debug(UserAccountAssociationConstants.ErrorMessages.SAME_ACCOUNT_CONNECTING_ERROR
-                            .getDescription());
+                    log.debug(SAME_ACCOUNT_CONNECTING_ERROR.getDescription());
 
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .SAME_ACCOUNT_CONNECTING_ERROR.toString());
+                throw handleUserAccountAssociationClientException(SAME_ACCOUNT_CONNECTING_ERROR, null, true);
             }
             if (UserAccountAssociationDAO.getInstance().isValidUserAssociation(user1Domain, user1Tenant,
                     username1WithoutDomain, user2Domain, user2Tenant, username2WithoutDomain)) {
                 if (log.isDebugEnabled()) {
-                    log.debug(UserAccountAssociationConstants.ErrorMessages.ALREADY_CONNECTED.getDescription());
+                    log.debug(ALREADY_CONNECTED.getDescription());
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .ALREADY_CONNECTED.toString());
+                throw handleUserAccountAssociationClientException(ALREADY_CONNECTED, null, true);
             }
             String associationKey = UserAccountAssociationDAO.getInstance().getAssociationKeyOfUser(user1Domain,
                     user1Tenant, username1WithoutDomain);
@@ -163,15 +180,12 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                 UserAccountAssociationDAO.getInstance().updateUserAssociationKey(connUserAssociationKey,
                         associationKey);
             }
-
-
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS.getDescription());
+                log.debug(INVALID_INPUTS.getDescription());
 
             }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS
-                    .toString());
+            throw handleUserAccountAssociationClientException(INVALID_INPUTS, null, true);
         }
 
     }
@@ -190,13 +204,9 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
             realmService = IdentityAccountAssociationServiceComponent.getRealmService();
             tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
         } catch (UserStoreException e) {
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_GETTING_TENANT_ID
-                    .getDescription(), e);
+            throw handleUserAccountAssociationClientException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
         } catch (Exception e) {
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_LOADING_REALM_SERVICE
-                    .getDescription(), e);
+            throw handleUserAccountAssociationClientException(ERROR_WHILE_LOADING_REALM_SERVICE, e, false);
         }
 
         if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
@@ -204,8 +214,7 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                 log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
                         .getDescription(), MultitenantUtils.getTenantDomain(userName)));
             }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .INVALID_TENANT_DOMAIN.toString());
+            throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
         }
         boolean authentic;
         try {
@@ -213,18 +222,15 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
             authentic = userRealm.getUserStoreManager().authenticate(tenantAwareUsername, String.valueOf(password));
             userName = UserCoreUtil.addDomainToName(userName, UserCoreUtil.getDomainFromThreadLocal());
         } catch (UserStoreException e) {
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_AUTHENTICATING_USER
-                    .getDescription(), e);
+            throw handleUserAccountAssociationClientException(ERROR_WHILE_AUTHENTICATING_USER, e, false);
         }
 
         if (!authentic) {
             if (log.isDebugEnabled()) {
-                log.debug(UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC.getDescription());
+                log.debug(USER_NOT_AUTHENTIC.getDescription());
 
             }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                    .USER_NOT_AUTHENTIC.toString());
+            throw handleUserAccountAssociationClientException(USER_NOT_AUTHENTIC, null, true);
         }
 
         UserAccountConnectorImpl.getInstance().createUserAccountAssociation(loggedInUser, userName);
@@ -249,13 +255,9 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
             } catch (UserStoreException e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_GETTING_TENANT_ID
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
             } catch (Exception e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_LOADING_REALM_SERVICE
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_LOADING_REALM_SERVICE, e, false);
             }
 
             if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
@@ -263,8 +265,7 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                     log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
                             .getDescription(), MultitenantUtils.getTenantDomain(userName)));
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .INVALID_TENANT_DOMAIN.toString());
+                throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
             }
 
             String domainName = IdentityUtil.extractDomainFromName(tenantAwareUsername);
@@ -274,11 +275,10 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
 
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS.getDescription());
+                log.debug(INVALID_INPUTS.getDescription());
 
             }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants
-                    .ErrorMessages.INVALID_INPUTS.toString());
+            throw handleUserAccountAssociationClientException(INVALID_INPUTS, null, true);
         }
     }
 
@@ -296,19 +296,15 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
         String tenantAwareUserName = MultitenantUtils.getTenantAwareUsername(userName);
         String tenantDomain = MultitenantUtils.getTenantDomain(userName);
         RealmService realmService;
-        int tenantId = MultitenantConstants.INVALID_TENANT_ID;
+        int tenantId;
 
         try {
             realmService = IdentityAccountAssociationServiceComponent.getRealmService();
             tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
         } catch (UserStoreException e) {
-            throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_GETTING_TENANT_ID
-                    .getDescription(), e);
+            throw handleUserAccountAssociationServerException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
         } catch (Exception e) {
-            throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                    .ERROR_WHILE_LOADING_REALM_SERVICE
-                    .getDescription(), e);
+            throw handleUserAccountAssociationServerException(ERROR_WHILE_LOADING_REALM_SERVICE, e, false);
         }
         List<UserAccountAssociationDTO> userAccountAssociations = UserAccountAssociationDAO.getInstance()
                 .getAssociationsOfUser(
@@ -344,13 +340,9 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
             } catch (UserStoreException e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_GETTING_TENANT_ID
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
             } catch (Exception e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_LOADING_REALM_SERVICE
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_LOADING_REALM_SERVICE, e, false);
             }
 
             if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
@@ -358,17 +350,15 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                     log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
                             .getDescription(), MultitenantUtils.getTenantDomain(userName)));
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .INVALID_TENANT_DOMAIN.toString());
+                throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
             }
 
             if (!UserAccountAssociationDAO.getInstance().isValidUserAssociation(domainName, tenantId,
                     tenantAwareUsername)) {
                 if (log.isDebugEnabled()) {
-                    log.debug(UserAccountAssociationConstants.ErrorMessages.INVALID_ASSOCIATION.getDescription());
+                    log.debug(INVALID_ASSOCIATION.getDescription());
                 }
-                throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages
-                        .INVALID_ASSOCIATION.toString());
+                throw handleUserAccountAssociationClientException(INVALID_ASSOCIATION, null, true);
             }
 
             try {
@@ -416,28 +406,19 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                             tenantAwareUsername, tenantId, tenantDomain));
                 }
             } catch (org.wso2.carbon.user.core.UserStoreException e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_UPDATING_SESSION
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_UPDATING_SESSION, e, false);
             } catch (UserStoreException e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_ACCESSING_REALM_SERVICE
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_ACCESSING_REALM_SERVICE, e, false);
             } catch (AuthenticationException e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_RETRIEVING_REMOTE_ADDRESS
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_RETRIEVING_REMOTE_ADDRESS, e, false);
             } catch (Exception e) {
-                throw new UserAccountAssociationServerException(UserAccountAssociationConstants.ErrorMessages
-                        .ERROR_WHILE_EXECUTING_AUTHENTICATORS
-                        .getDescription(), e);
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_EXECUTING_AUTHENTICATORS, e, false);
             }
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS.getDescription());
+                log.debug(INVALID_INPUTS.getDescription());
             }
-            throw new UserAccountAssociationClientException(UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS
-                    .toString());
+            throw handleUserAccountAssociationClientException(INVALID_INPUTS, null, true);
         }
 
         return false;
@@ -466,5 +447,57 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
         }
         return "Failed to switch from \'" + loggedInUser + "\' [" + loggedInTenant + "] to \'"
                 + userName + "@" + tenantDomain + " [" + tenantId + "]\' at " + date.format(currentTime);
+    }
+
+    private UserAccountAssociationClientException handleUserAccountAssociationClientException
+            (UserAccountAssociationConstants.ErrorMessages errorMessages, Throwable throwable, boolean
+                    messageWithCode) {
+
+        String message;
+        if (messageWithCode) {
+            message = errorMessages.toString();
+        } else {
+            message = errorMessages.getDescription();
+        }
+
+        if (throwable == null) {
+            return new UserAccountAssociationClientException(String.valueOf(errorMessages.getCode()), message);
+        } else {
+            return new UserAccountAssociationClientException(String.valueOf(errorMessages.getCode()), message, throwable);
+        }
+    }
+
+    private UserAccountAssociationServerException handleUserAccountAssociationServerException
+            (UserAccountAssociationConstants.ErrorMessages errorMessages, Throwable throwable, boolean
+                    messageWithCode) {
+
+        String message;
+        if (messageWithCode) {
+            message = errorMessages.toString();
+        } else {
+            message = errorMessages.getDescription();
+        }
+
+        if (throwable == null) {
+            return new UserAccountAssociationServerException(String.valueOf(errorMessages.getCode()), message);
+        } else {
+            return new UserAccountAssociationServerException(String.valueOf(errorMessages.getCode()), message, throwable);
+        }
+    }
+
+    private void logWarnMessage(String userName1, String userName2, boolean user1Exists, boolean user2Exists) {
+
+        StringBuilder errorMsg = new StringBuilder("User association failed due to the following " +
+                "user/users does not exist in the system. \n");
+        if (!user1Exists) {
+            errorMsg.append(" - user: ");
+            errorMsg.append(userName1);
+        }
+
+        if (!user2Exists) {
+            errorMsg.append(" - user: ");
+            errorMsg.append(userName2);
+        }
+        log.warn(errorMsg);
     }
 }
