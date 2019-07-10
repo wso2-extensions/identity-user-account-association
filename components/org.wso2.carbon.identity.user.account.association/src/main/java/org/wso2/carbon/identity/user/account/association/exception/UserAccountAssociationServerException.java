@@ -29,4 +29,12 @@ public class UserAccountAssociationServerException extends UserAccountAssociatio
     public UserAccountAssociationServerException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public UserAccountAssociationServerException(String errorCode, String message) {
+        super(errorCode, message);
+    }
+
+    public UserAccountAssociationServerException(String errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+    }
 }
