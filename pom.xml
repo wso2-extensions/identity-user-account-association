@@ -294,7 +294,7 @@
         <identity.user.account.association.imp.pkg.version>[5.2.0, 6.0.0)</identity.user.account.association.imp.pkg.version>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.5.0-m1</carbon.kernel.version>
+        <carbon.kernel.version>4.5.0-m3</carbon.kernel.version>
         <carbon.kernel.registry.imp.pkg.version>[1.0.1, 2.0.0)</carbon.kernel.registry.imp.pkg.version>
         <carbon.kernel.package.import.version.range>[4.5.0, 5.0.0)</carbon.kernel.package.import.version.range>
 
