@@ -245,41 +245,30 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
     @Override
     public void deleteUserAccountAssociation(String userName) throws UserAccountAssociationException {
 
-        if (!StringUtils.isBlank(userName)) {
+        int tenantId = getTenantId(userName);
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(userName);
+        String domainName = IdentityUtil.extractDomainFromName(tenantAwareUsername);
+        tenantAwareUsername = UserAccountAssociationUtil.getUsernameWithoutDomain(tenantAwareUsername);
+        UserAccountAssociationDAO.getInstance().deleteUserAssociation(domainName, tenantId, tenantAwareUsername);
+    }
 
-            String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(userName);
-            int tenantId = MultitenantConstants.INVALID_TENANT_ID;
-            RealmService realmService;
+    /**
+     * Delete all existing user account associations
+     *
+     * @param userName Username of account to delete associations of.
+     * @throws org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException
+     */
+    @Override
+    public void deleteAllUserAssociations(String userName) throws UserAccountAssociationException {
 
-            try {
-                realmService = IdentityAccountAssociationServiceComponent.getRealmService();
-                tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
-            } catch (UserStoreException e) {
-                throw handleUserAccountAssociationServerException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
-            } catch (Exception e) {
-                throw handleUserAccountAssociationServerException(ERROR_WHILE_LOADING_REALM_SERVICE, e, false);
-            }
+        int tenantId = getTenantId(userName);
+        String tenantAwareUsername = MultitenantUtils.getTenantAwareUsername(userName);
+        String domainName = IdentityUtil.extractDomainFromName(tenantAwareUsername);
+        tenantAwareUsername = UserAccountAssociationUtil.getUsernameWithoutDomain(tenantAwareUsername);
 
-            if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
-                            .getDescription(), MultitenantUtils.getTenantDomain(userName)));
-                }
-                throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
-            }
-
-            String domainName = IdentityUtil.extractDomainFromName(tenantAwareUsername);
-            tenantAwareUsername = UserAccountAssociationUtil.getUsernameWithoutDomain(tenantAwareUsername);
-
-            UserAccountAssociationDAO.getInstance().deleteUserAssociation(domainName, tenantId, tenantAwareUsername);
-
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug(INVALID_INPUTS.getDescription());
-
-            }
-            throw handleUserAccountAssociationClientException(INVALID_INPUTS, null, true);
-        }
+        String associationKey = UserAccountAssociationDAO.getInstance().getAssociationKeyOfUser
+                (domainName, tenantId, tenantAwareUsername);
+        UserAccountAssociationDAO.getInstance().deleteUserAssociationsFromAssociationKey(associationKey);
     }
 
     /**
@@ -499,5 +488,38 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
             errorMsg.append(userName2);
         }
         log.warn(errorMsg);
+    }
+
+    private int getTenantId(String userName) throws UserAccountAssociationServerException, UserAccountAssociationClientException {
+
+        int tenantId = MultitenantConstants.INVALID_TENANT_ID;
+        if (!StringUtils.isBlank(userName)) {
+            RealmService realmService;
+
+            try {
+                realmService = IdentityAccountAssociationServiceComponent.getRealmService();
+                tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
+            } catch (UserStoreException e) {
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
+            } catch (Exception e) {
+                throw handleUserAccountAssociationServerException(ERROR_WHILE_LOADING_REALM_SERVICE, e, false);
+            }
+
+            if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
+                            .getDescription(), MultitenantUtils.getTenantDomain(userName)));
+                }
+                throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
+            }
+
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug(INVALID_INPUTS.getDescription());
+            }
+            throw handleUserAccountAssociationClientException(INVALID_INPUTS, null, true);
+        }
+
+        return tenantId;
     }
 }

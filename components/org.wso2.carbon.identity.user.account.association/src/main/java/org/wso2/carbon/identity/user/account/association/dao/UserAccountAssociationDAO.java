@@ -389,6 +389,25 @@ public class UserAccountAssociationDAO {
         }
     }
 
+    public void deleteUserAssociationsFromAssociationKey(String associationKey)
+            throws UserAccountAssociationServerException {
+
+        try (Connection dbConnection = IdentityDatabaseUtil.getDBConnection();
+             PreparedStatement preparedStatement = dbConnection.prepareStatement(UserAccountAssociationConstants
+                     .SQLQueries.DELETE_USER_ASSOCIATIONS)) {
+
+            preparedStatement.setString(1, associationKey);
+            preparedStatement.executeUpdate();
+
+            if (!dbConnection.getAutoCommit()) {
+                dbConnection.commit();
+            }
+        } catch (SQLException e) {
+            throw new UserAccountAssociationServerException(String.format(UserAccountAssociationConstants.ErrorMessages
+                    .ERROR_DELETE_ASSOC_KEY.getDescription(), associationKey), e);
+        }
+    }
+
     private static class LazyHolder {
         private static final UserAccountAssociationDAO INSTANCE = new UserAccountAssociationDAO();
     }

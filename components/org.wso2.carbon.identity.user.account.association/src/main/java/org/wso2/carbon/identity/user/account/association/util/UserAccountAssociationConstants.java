@@ -73,7 +73,10 @@ public class UserAccountAssociationConstants {
                                                      "domain '%s'"),
         ERROR_WHILE_RETRIEVING_ASSOC_OF_USER(8538, "Database error occurred while retrieving account associations of " +
                 "user %s"),
-        ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user");
+        ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user"),
+
+        ERROR_DELETE_ASSOC_KEY(8540, "Database error occurred while deleting user associations for " +
+                                                    "the association key '%s'");
 
         private final int code;
         private final String description;
@@ -132,6 +135,9 @@ public class UserAccountAssociationConstants {
 
         public static final String DELETE_USER_ASSOCIATION_FROM_DOMAIN = "DELETE FROM IDN_USER_ACCOUNT_ASSOCIATION " +
                                                                          "WHERE TENANT_ID = ? AND DOMAIN_NAME = ?";
+
+        public static final String DELETE_USER_ASSOCIATIONS = "DELETE FROM IDN_USER_ACCOUNT_ASSOCIATION " +
+                "WHERE ASSOCIATION_KEY = ?";
 
     }
 
