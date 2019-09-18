@@ -313,7 +313,7 @@
         <identity.user.account.association.imp.pkg.version>[5.3.0, 6.0.0)</identity.user.account.association.imp.pkg.version>
 
         <!-- Carbon kernel version -->
-        <carbon.kernel.version>4.5.0-m3</carbon.kernel.version>
+        <carbon.kernel.version>4.5.0</carbon.kernel.version>
         <carbon.kernel.feature.version>4.5.0</carbon.kernel.feature.version>
         <carbon.kernel.registry.imp.pkg.version>[1.0.1, 2.0.0)</carbon.kernel.registry.imp.pkg.version>
         <carbon.kernel.package.import.version.range>[4.5.0, 5.0.0)</carbon.kernel.package.import.version.range>
@@ -322,17 +322,17 @@
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
 
         <!--Carbon Identity Version-->
-        <carbon.identity.framework.imp.pkg.version.range>[5.14.0, 6.0.0)</carbon.identity.framework.imp.pkg.version.range>
+        <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)</carbon.identity.framework.imp.pkg.version.range>
 
         <!--Carbon component Version-->
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
 
         <!-- Carbon Commons Version -->
-        <carbon.commons.version>4.7.2</carbon.commons.version>
+        <carbon.commons.version>4.7.11</carbon.commons.version>
 
         <!--Axis2 Version -->
-        <axis2.osgi.version.range>[1.6.1-wso2v37, 2.0.0)</axis2.osgi.version.range>
-        <axis2.wso2.version>1.6.1-wso2v37</axis2.wso2.version>
+        <axis2.osgi.version.range>[1.6.1-wso2v38, 2.0.0)</axis2.osgi.version.range>
+        <axis2.wso2.version>1.6.1-wso2v38</axis2.wso2.version>
 
         <!-- Commons -->
         <commons-lang.wso2.osgi.version.range>[2.6.0,3.0.0)</commons-lang.wso2.osgi.version.range>
@@ -340,7 +340,7 @@
         <commons-lang.wso2.version>2.6.0.wso2v1</commons-lang.wso2.version>
 
         <wss4j.xml.security.imp.pkg.version.range>[1.4.2.patched,2.0.0)</wss4j.xml.security.imp.pkg.version.range>
-        <carbon.identity.framework.version>5.14.0</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.14.67</carbon.identity.framework.version>
         <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
         <axiom.wso2.version>1.2.11-wso2v16</axiom.wso2.version>
 
