@@ -14,13 +14,11 @@
  * KIND, either express or implied.  See the License for the
  *  specific language governing permissions and limitations
  * under the License.
- *
- *
  */
 
 package org.wso2.carbon.identity.user.account.association.handler.grant;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.common.model.User;
@@ -37,57 +35,36 @@ import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.user.account.association.UserAccountConnectorImpl;
 import org.wso2.carbon.identity.user.account.association.dto.UserAccountAssociationDTO;
 import org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException;
+import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.AccountSwitchGrant;
 
 import java.util.Arrays;
 import java.util.HashSet;
 
+/**
+ * Implements the AuthorizationGrantHandler for the AccountSwitchGrant Type : account-switch.
+ */
 public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler {
 
     private static final Log log = LogFactory.getLog(AccountSwitchGrantHandler.class);
-
-    public static final String TOKEN_PARAM = "token";
-    public static final String USERNAME_PARAM = "username";
-    public static final String USERSTORE_DOMAIN_PARAM = "userstore-domain";
-    public static final String TENANT_DOMAIN_PARAM = "tenant-domain";
-    private final String OAUTH_HEADER = "Bearer";
-    private final String ACCOUNT_SWITCH_TOKEN_VALIDATION_CONTEXT = "accountSwitchTokenValidationContext";
 
     @Override
     public boolean validateGrant(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
         super.validateGrant(tokReqMsgCtx);
 
-        String token = extractParameter(TOKEN_PARAM, tokReqMsgCtx);;
-        String username = extractParameter(USERNAME_PARAM, tokReqMsgCtx);;
-        String userstoreDomain = extractParameter(USERSTORE_DOMAIN_PARAM, tokReqMsgCtx);;
-        String tenantDomain = extractParameter(TENANT_DOMAIN_PARAM, tokReqMsgCtx);;
-
-        if (StringUtils.isEmpty(token) || StringUtils.isEmpty(username) || StringUtils.isEmpty(username) ||
-                StringUtils.isEmpty(username)) {
-            if (log.isDebugEnabled()) {
-                log.debug("Grant validation failed. Missing required parameters.");
-            }
-            ResponseHeader responseHeader = new ResponseHeader();
-            responseHeader.setKey("error-description");
-            responseHeader.setValue("Missing required parameters");
-            tokReqMsgCtx.addProperty("RESPONSE_HEADERS", new ResponseHeader[]{responseHeader});
-
-            return false;
-        }
+        String token = extractParameter(AccountSwitchGrant.Params.TOKEN_PARAM, tokReqMsgCtx);
+        String username = extractParameter(AccountSwitchGrant.Params.USERNAME_PARAM, tokReqMsgCtx);
+        String userstoreDomain = extractParameter(AccountSwitchGrant.Params.USERSTORE_DOMAIN_PARAM, tokReqMsgCtx);
+        String tenantDomain = extractParameter(AccountSwitchGrant.Params.TENANT_DOMAIN_PARAM, tokReqMsgCtx);
 
         OAuth2TokenValidationResponseDTO validationResponseDTO = validateToken(token);
-        tokReqMsgCtx.addProperty(ACCOUNT_SWITCH_TOKEN_VALIDATION_CONTEXT, validationResponseDTO);
 
         if (!validationResponseDTO.isValid()) {
             if (log.isDebugEnabled()) {
                 log.debug("Access token validation failed.");
             }
-            ResponseHeader responseHeader = new ResponseHeader();
-            responseHeader.setKey("error-description");
-            responseHeader.setValue("Missing required parameters");
-            tokReqMsgCtx.addProperty("RESPONSE_HEADERS", new ResponseHeader[]{responseHeader});
 
-            return false;
+            throw new IdentityOAuth2Exception("Invalid token received.");
         }
 
         if (log.isDebugEnabled()) {
@@ -142,10 +119,12 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
 
         RequestParameter[] parameters = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getRequestParameters();
 
-        for (RequestParameter parameter : parameters) {
-            if (param.equals(parameter.getKey())) {
-                if (parameter.getValue() != null && parameter.getValue().length > 0) {
-                    return parameter.getValue()[0];
+        if (parameters != null) {
+            for (RequestParameter parameter : parameters) {
+                if (param.equals(parameter.getKey())) {
+                    if (ArrayUtils.isNotEmpty(parameter.getValue())) {
+                        return parameter.getValue()[0];
+                    }
                 }
             }
         }
@@ -156,16 +135,14 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
     private String[] getAllowedScopes(String[] authorizedScoped, String[] requestedScopes) {
 
         HashSet<String> allowedScopesSet = new HashSet<>();
-        allowedScopesSet.addAll(Arrays.asList(authorizedScoped));
-        allowedScopesSet.retainAll(Arrays.asList(requestedScopes));
+        allowedScopesSet.addAll(Arrays.asList(ArrayUtils.nullToEmpty(authorizedScoped)));
+        allowedScopesSet.retainAll(Arrays.asList(ArrayUtils.nullToEmpty(requestedScopes)));
 
         if (log.isDebugEnabled()) {
             log.debug("Allowed scopes: " + allowedScopesSet);
         }
 
-        String[] allowedScopes = {};
-        allowedScopes = allowedScopesSet.toArray(allowedScopes);
-        return allowedScopes;
+        return allowedScopesSet.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
 
     private boolean validateAssociation(User user, User associatedUser) throws UserAccountAssociationException {
@@ -175,12 +152,10 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         if (userAccountAssociationDTOS != null) {
             for (UserAccountAssociationDTO userAccountAssociationDTO : userAccountAssociationDTOS) {
 
-                if (userAccountAssociationDTO.getTenantDomain().equals(associatedUser.getTenantDomain())) {
-                    if (userAccountAssociationDTO.getDomain().equals(associatedUser.getUserStoreDomain())) {
-                        if (userAccountAssociationDTO.getUsername().equals(associatedUser.getUserName())) {
-                            return true;
-                        }
-                    }
+                if (associatedUser.getTenantDomain().equals(userAccountAssociationDTO.getTenantDomain()) &&
+                        associatedUser.getUserStoreDomain().equals(userAccountAssociationDTO.getDomain()) &&
+                        associatedUser.getUserName().equals(userAccountAssociationDTO.getUsername())) {
+                    return true;
                 }
             }
         }
@@ -199,7 +174,7 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         OAuth2TokenValidationRequestDTO.OAuth2AccessToken token = requestDTO.new OAuth2AccessToken();
 
         token.setIdentifier(accessToken);
-        token.setTokenType(OAUTH_HEADER);
+        token.setTokenType("bearer");
         requestDTO.setAccessToken(token);
 
         //TODO: If these values are not set, validation will fail giving an NPE. Need to see why that happens
@@ -208,9 +183,7 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         contextParam.setKey("dummy");
         contextParam.setValue("dummy");
 
-        OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams =
-                new OAuth2TokenValidationRequestDTO.TokenValidationContextParam[1];
-        contextParams[0] = contextParam;
+        OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams = {contextParam};
         requestDTO.setContext(contextParams);
 
         OAuth2ClientApplicationDTO clientApplicationDTO = oAuth2TokenValidationService

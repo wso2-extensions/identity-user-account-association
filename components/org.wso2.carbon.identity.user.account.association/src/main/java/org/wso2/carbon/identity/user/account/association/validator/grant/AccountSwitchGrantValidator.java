@@ -14,25 +14,25 @@
  * KIND, either express or implied.  See the License for the
  *  specific language governing permissions and limitations
  * under the License.
- *
- *
  */
 
 package org.wso2.carbon.identity.user.account.association.validator.grant;
 
 import org.apache.oltu.oauth2.common.validators.AbstractValidator;
-import org.wso2.carbon.identity.user.account.association.handler.grant.AccountSwitchGrantHandler;
+import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.AccountSwitchGrant;
 
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * AccountSwitchGrant validator for Account Switch AccountSwitchGrant Type.
+ */
 public class AccountSwitchGrantValidator extends AbstractValidator<HttpServletRequest> {
 
     public AccountSwitchGrantValidator() {
 
-        // token must be in the request parameter
-        requiredParams.add(AccountSwitchGrantHandler.TOKEN_PARAM);
-        requiredParams.add(AccountSwitchGrantHandler.USERNAME_PARAM);
-        requiredParams.add(AccountSwitchGrantHandler.USERSTORE_DOMAIN_PARAM);
-        requiredParams.add(AccountSwitchGrantHandler.TENANT_DOMAIN_PARAM);
+        requiredParams.add(AccountSwitchGrant.Params.TOKEN_PARAM);
+        requiredParams.add(AccountSwitchGrant.Params.USERNAME_PARAM);
+        requiredParams.add(AccountSwitchGrant.Params.TENANT_DOMAIN_PARAM);
+        requiredParams.add(AccountSwitchGrant.Params.TENANT_DOMAIN_PARAM);
     }
 }

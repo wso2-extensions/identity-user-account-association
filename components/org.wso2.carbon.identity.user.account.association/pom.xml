@@ -137,7 +137,6 @@
                             version="${carbon.identity.framework.imp.pkg.version.range}",
                             org.wso2.carbon.identity.user.store.configuration.*;
                             version="${carbon.identity.framework.imp.pkg.version.range}",
-
                             org.wso2.carbon.identity.oauth2.*;
                             version="${identity.inbound.auth.oauth.version.imp.pkg.version.range}",
 
