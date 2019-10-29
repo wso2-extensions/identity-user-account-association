@@ -135,4 +135,20 @@ public class UserAccountAssociationConstants {
 
     }
 
+    /**
+     * Constants related to Account Switch OAuth grant type.
+     */
+    public static class AccountSwitchGrant {
+
+        /**
+         * Constants related to request parameters.
+         */
+        public static class Params {
+
+            public static final String TOKEN_PARAM = "token";
+            public static final String USERNAME_PARAM = "username";
+            public static final String USERSTORE_DOMAIN_PARAM = "userstore-domain";
+            public static final String TENANT_DOMAIN_PARAM = "tenant-domain";
+        }
+    }
 }
