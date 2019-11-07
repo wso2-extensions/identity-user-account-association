@@ -30,6 +30,7 @@ import org.wso2.carbon.core.services.authentication.AuthenticationUtil;
 import org.wso2.carbon.core.services.authentication.stats.LoginAttempt;
 import org.wso2.carbon.core.services.authentication.stats.LoginStatDatabase;
 import org.wso2.carbon.core.services.util.CarbonAuthenticationUtil;
+import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.user.account.association.dao.UserAccountAssociationDAO;
 import org.wso2.carbon.identity.user.account.association.dto.UserAccountAssociationDTO;
@@ -67,6 +68,7 @@ import static org.wso2.carbon.identity.user.account.association.util.UserAccount
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.SAME_ACCOUNT_CONNECTING_ERROR;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC;
+import static org.wso2.carbon.user.core.UserCoreConstants.TENANT_DOMAIN_COMBINER;
 
 public class UserAccountConnectorImpl implements UserAccountConnector {
 
@@ -279,6 +281,21 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
 
             }
             throw handleUserAccountAssociationClientException(INVALID_INPUTS, null, true);
+        }
+    }
+
+    @Override
+    public void deleteAssociatedUserAccount(String ownerUserName, String associatedUserName)
+            throws UserAccountAssociationException {
+
+        if (isOwnerHasAValidAssociation(ownerUserName, associatedUserName)) {
+            deleteUserAccountAssociation(associatedUserName);
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("The user: " + ownerUserName + ", does not have a valid association with the user: "
+                        + associatedUserName + ", to proceed with the deletion of the association");
+            }
+            throw handleUserAccountAssociationClientException(INVALID_ASSOCIATION, null, true);
         }
     }
 
@@ -499,5 +516,49 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
             errorMsg.append(userName2);
         }
         log.warn(errorMsg);
+    }
+
+    private boolean isOwnerHasAValidAssociation(String ownerUserName, String associatedUserName)
+            throws UserAccountAssociationException {
+
+        boolean isOwnerHasValidAssociation = false;
+        User associatedUser = getAssociatedUser(associatedUserName);
+        for (UserAccountAssociationDTO eachUserAccountAssociation : getAccountAssociationsOfUser(ownerUserName)) {
+            if (isSameAsTheAssociatedUser(associatedUser, eachUserAccountAssociation)) {
+                isOwnerHasValidAssociation = true;
+            }
+        }
+        return isOwnerHasValidAssociation;
+    }
+
+    private boolean isSameAsTheAssociatedUser(
+            User associatedUser, UserAccountAssociationDTO eachUserAccountAssociation) {
+
+        return eachUserAccountAssociation.getTenantDomain().equals(associatedUser.getTenantDomain())
+                && eachUserAccountAssociation.getDomain().equals(associatedUser.getUserStoreDomain())
+                && eachUserAccountAssociation.getUsername().equals(associatedUser.getUserName());
+    }
+
+    private User getAssociatedUser(String associatedUserName) {
+
+        String tenantAwareUserName = MultitenantUtils.getTenantAwareUsername(associatedUserName);
+        String tenantDomain = MultitenantUtils.getTenantDomain(tenantAwareUserName);
+        String userStoreDomain = UserCoreUtil.extractDomainFromName(tenantAwareUserName);
+        String userName = removeTenantDomain(UserCoreUtil.removeDomainFromName(tenantAwareUserName));
+
+        User associatedUser = new User();
+        associatedUser.setUserName(userName);
+        associatedUser.setUserStoreDomain(userStoreDomain);
+        associatedUser.setTenantDomain(tenantDomain);
+        return associatedUser;
+    }
+
+    private String removeTenantDomain(String username) {
+
+        String tenantDomain = MultitenantUtils.getTenantDomain(username);
+        if (username.endsWith(tenantDomain)) {
+            return username.substring(0, username.lastIndexOf(TENANT_DOMAIN_COMBINER));
+        }
+        return username;
     }
 }
