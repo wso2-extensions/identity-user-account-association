@@ -531,34 +531,25 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
         return isOwnerHasValidAssociation;
     }
 
-    private boolean isSameAsTheAssociatedUser(
-            User associatedUser, UserAccountAssociationDTO eachUserAccountAssociation) {
+    private boolean isSameAsTheAssociatedUser(User associatedUser, UserAccountAssociationDTO userAccountAssociation) {
 
-        return eachUserAccountAssociation.getTenantDomain().equals(associatedUser.getTenantDomain())
-                && eachUserAccountAssociation.getDomain().equals(associatedUser.getUserStoreDomain())
-                && eachUserAccountAssociation.getUsername().equals(associatedUser.getUserName());
+        return userAccountAssociation.getTenantDomain().equals(associatedUser.getTenantDomain())
+                && userAccountAssociation.getDomain().equals(associatedUser.getUserStoreDomain())
+                && userAccountAssociation.getUsername().equals(associatedUser.getUserName());
     }
 
     private User getAssociatedUser(String associatedUserName) {
 
+        String tenantDomain = MultitenantUtils.getTenantDomain(associatedUserName);
+        String userStoreDomain = UserCoreUtil.extractDomainFromName(associatedUserName);
+
         String tenantAwareUserName = MultitenantUtils.getTenantAwareUsername(associatedUserName);
-        String tenantDomain = MultitenantUtils.getTenantDomain(tenantAwareUserName);
-        String userStoreDomain = UserCoreUtil.extractDomainFromName(tenantAwareUserName);
-        String userName = removeTenantDomain(UserCoreUtil.removeDomainFromName(tenantAwareUserName));
+        String userName = UserCoreUtil.removeDomainFromName(tenantAwareUserName);
 
         User associatedUser = new User();
         associatedUser.setUserName(userName);
         associatedUser.setUserStoreDomain(userStoreDomain);
         associatedUser.setTenantDomain(tenantDomain);
         return associatedUser;
-    }
-
-    private String removeTenantDomain(String username) {
-
-        String tenantDomain = MultitenantUtils.getTenantDomain(username);
-        if (username.endsWith(tenantDomain)) {
-            return username.substring(0, username.lastIndexOf(TENANT_DOMAIN_COMBINER));
-        }
-        return username;
     }
 }
