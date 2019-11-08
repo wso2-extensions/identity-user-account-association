@@ -50,7 +50,7 @@ public interface UserAccountConnector {
     default void deleteAssociatedUserAccount(String ownerUserName, String associatedUserName)
             throws UserAccountAssociationException {
 
-        throw new UserAccountAssociationException("This is not implemented");
+        throw new UnsupportedOperationException("This is not implemented, yet");
     }
 
     /**
