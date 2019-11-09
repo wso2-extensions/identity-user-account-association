@@ -41,6 +41,19 @@ public interface UserAccountConnector {
     void deleteUserAccountAssociation(String userName) throws UserAccountAssociationException;
 
     /**
+     * Delete an existing user account association of an owner's account
+     *
+     * @param ownerUserName Username of account trying to delete it's association.
+     * @param associatedUserName Username of account associated to delete associations of.
+     * @throws org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException
+     */
+    default void deleteAssociatedUserAccount(String ownerUserName, String associatedUserName)
+            throws UserAccountAssociationException {
+
+        throw new UnsupportedOperationException("This is not implemented, yet");
+    }
+
+    /**
      * Get all associated accounts of the logged in user
      *
      * @param userName userName to get account list of
