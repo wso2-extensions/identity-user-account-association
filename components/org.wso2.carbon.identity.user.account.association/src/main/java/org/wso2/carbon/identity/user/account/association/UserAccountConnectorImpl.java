@@ -54,6 +54,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ALREADY_CONNECTED;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ATTEMPTED_CROSS_TENANT_ASSOCIATION;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_RETRIEVING_TENANT_ID_OF_USER;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_ACCESSING_REALM_SERVICE;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_AUTHENTICATING_USER;
@@ -193,6 +194,8 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
     public void createUserAccountAssociation(String userName, char[] password) throws
             UserAccountAssociationException {
 
+
+        String tenantDomain = MultitenantUtils.getTenantDomain(userName);
         String loggedInUser = UserCoreUtil.addTenantDomainToEntry(CarbonContext.getThreadLocalCarbonContext()
                 .getUsername(), CarbonContext.getThreadLocalCarbonContext().getTenantDomain());
 
@@ -202,7 +205,7 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
         int tenantId;
         try {
             realmService = IdentityAccountAssociationServiceComponent.getRealmService();
-            tenantId = realmService.getTenantManager().getTenantId(MultitenantUtils.getTenantDomain(userName));
+            tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
         } catch (UserStoreException e) {
             throw handleUserAccountAssociationClientException(ERROR_WHILE_GETTING_TENANT_ID, e, false);
         } catch (Exception e) {
@@ -212,10 +215,15 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
         if (MultitenantConstants.INVALID_TENANT_ID == tenantId) {
             if (log.isDebugEnabled()) {
                 log.debug(String.format(UserAccountAssociationConstants.ErrorMessages.DEBUG_INVALID_TENANT_DOMAIN
-                        .getDescription(), MultitenantUtils.getTenantDomain(userName)));
+                        .getDescription(), tenantDomain));
             }
             throw handleUserAccountAssociationClientException(INVALID_TENANT_DOMAIN, null, true);
         }
+
+        if (!CarbonContext.getThreadLocalCarbonContext().getTenantDomain().equals(tenantDomain)) {
+            throw handleUserAccountAssociationClientException(ATTEMPTED_CROSS_TENANT_ASSOCIATION, null, false);
+        }
+
         boolean authentic;
         try {
             userRealm = realmService.getTenantUserRealm(tenantId);

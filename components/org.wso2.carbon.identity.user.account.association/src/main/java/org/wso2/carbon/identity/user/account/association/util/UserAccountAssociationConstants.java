@@ -73,7 +73,8 @@ public class UserAccountAssociationConstants {
                                                      "domain '%s'"),
         ERROR_WHILE_RETRIEVING_ASSOC_OF_USER(8538, "Database error occurred while retrieving account associations of " +
                 "user %s"),
-        ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user");
+        ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user"),
+        ATTEMPTED_CROSS_TENANT_ASSOCIATION(8540, "Cross tenant association is not allowed");
 
         private final int code;
         private final String description;
