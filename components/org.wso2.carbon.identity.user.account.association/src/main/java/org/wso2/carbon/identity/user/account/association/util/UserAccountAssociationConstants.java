@@ -74,7 +74,8 @@ public class UserAccountAssociationConstants {
         ERROR_WHILE_RETRIEVING_ASSOC_OF_USER(8538, "Database error occurred while retrieving account associations of " +
                 "user %s"),
         ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user"),
-        ATTEMPTED_CROSS_TENANT_ASSOCIATION(8540, "Cross tenant association is not allowed");
+        ATTEMPTED_CROSS_TENANT_ASSOCIATION(8540, "Cross tenant association is not allowed"),
+        ERROR_WHILE_RETRIEVING_REQUIRED_USER_ATTRIBUTES(8541, "Error while retrieving required user attributes");
 
         private final int code;
         private final String description;
@@ -151,5 +152,15 @@ public class UserAccountAssociationConstants {
             public static final String USERSTORE_DOMAIN_PARAM = "userstore-domain";
             public static final String TENANT_DOMAIN_PARAM = "tenant-domain";
         }
+    }
+
+    /**
+     * Claim URIs to get attributes of the associated user.
+     */
+    public static class AssociatedUserClaims {
+
+        public static final String LOCAL_CLAIM_URI_FIRST_NAME = "http://wso2.org/claims/givenname";
+        public static final String LOCAL_CLAIM_URI_LAST_NAME = "http://wso2.org/claims/lastname";
+        public static final String LOCAL_CLAIM_URI_EMAIL_ADDRESS = "http://wso2.org/claims/emailaddress";
     }
 }
