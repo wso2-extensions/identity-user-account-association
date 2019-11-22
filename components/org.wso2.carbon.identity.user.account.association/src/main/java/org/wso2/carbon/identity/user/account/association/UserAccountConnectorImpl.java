@@ -31,6 +31,7 @@ import org.wso2.carbon.core.services.authentication.stats.LoginAttempt;
 import org.wso2.carbon.core.services.authentication.stats.LoginStatDatabase;
 import org.wso2.carbon.core.services.util.CarbonAuthenticationUtil;
 import org.wso2.carbon.identity.application.common.model.User;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.user.account.association.dao.UserAccountAssociationDAO;
 import org.wso2.carbon.identity.user.account.association.dto.UserAccountAssociationDTO;
@@ -42,6 +43,8 @@ import org.wso2.carbon.identity.user.account.association.util.UserAccountAssocia
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationUtil;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.claim.Claim;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -50,10 +53,15 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.AssociatedUserClaims.LOCAL_CLAIM_URI_EMAIL_ADDRESS;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.AssociatedUserClaims.LOCAL_CLAIM_URI_FIRST_NAME;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.AssociatedUserClaims.LOCAL_CLAIM_URI_LAST_NAME;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ALREADY_CONNECTED;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ATTEMPTED_CROSS_TENANT_ASSOCIATION;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_RETRIEVING_TENANT_ID_OF_USER;
@@ -63,13 +71,14 @@ import static org.wso2.carbon.identity.user.account.association.util.UserAccount
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_GETTING_TENANT_ID;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_LOADING_REALM_SERVICE;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_RETRIEVING_REMOTE_ADDRESS;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_RETRIEVING_REQUIRED_USER_ATTRIBUTES;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_UPDATING_SESSION;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_ASSOCIATION;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_INPUTS;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.SAME_ACCOUNT_CONNECTING_ERROR;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC;
-import static org.wso2.carbon.user.core.UserCoreConstants.TENANT_DOMAIN_COMBINER;
+import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
 
 public class UserAccountConnectorImpl implements UserAccountConnector {
 
@@ -336,6 +345,8 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                         IdentityUtil.extractDomainFromName(tenantAwareUserName),
                         tenantId, UserCoreUtil.removeDomainFromName(tenantAwareUserName));
 
+        populateRequiredUserClaims(tenantId, userAccountAssociations);
+
         if (!userAccountAssociations.isEmpty()) {
             return userAccountAssociations.toArray(new UserAccountAssociationDTO[userAccountAssociations.size()]);
         }
@@ -559,5 +570,80 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
         associatedUser.setUserStoreDomain(userStoreDomain);
         associatedUser.setTenantDomain(tenantDomain);
         return associatedUser;
+    }
+
+    private void populateRequiredUserClaims(int tenantId, List<UserAccountAssociationDTO> userAccountAssociations)
+            throws UserAccountAssociationException {
+
+        for (UserAccountAssociationDTO eachUserAccountAssociation : userAccountAssociations) {
+            Map<String, String> userClaims = getUserClaims(eachUserAccountAssociation, tenantId);
+            eachUserAccountAssociation.setFirstName(userClaims.get(LOCAL_CLAIM_URI_FIRST_NAME));
+            eachUserAccountAssociation.setLastName(userClaims.get(LOCAL_CLAIM_URI_LAST_NAME));
+            eachUserAccountAssociation.setEmail(userClaims.get(LOCAL_CLAIM_URI_EMAIL_ADDRESS));
+        }
+    }
+
+    private Map<String, String> getUserClaims(UserAccountAssociationDTO userAccountAssociationDTO, int tenantId)
+            throws UserAccountAssociationException {
+
+        Map<String, String> inboundAttributes = new HashMap<>();
+
+        RealmService realmService = IdentityAccountAssociationServiceComponent.getRealmService();
+        try {
+            UserRealm userRealm = realmService.getTenantUserRealm(tenantId);
+            if (!(userRealm instanceof org.wso2.carbon.user.core.UserRealm)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Unable to get user claims with the user realm class: " + userRealm.getClass()
+                            .getName() + ". The user realm should be an instance of: "
+                            + org.wso2.carbon.user.core.UserRealm.class + ". Therefore returning empty attributes");
+                }
+                return inboundAttributes;
+            }
+
+            String userStoreDomain = getUserStoreDomain(userAccountAssociationDTO);
+            UserStoreManager userStore = ((org.wso2.carbon.user.core.UserRealm) userRealm).getUserStoreManager()
+                    .getSecondaryUserStoreManager(userStoreDomain);
+            if (userStore == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Cannot get a valid user store for the user: " + userAccountAssociationDTO
+                            .getUsername() + ", in domain: " + userAccountAssociationDTO.getDomain() + ", and in the "
+                            + "tenant domain: " + IdentityTenantUtil.getTenantDomain(tenantId) + ". Therefore returning " +
+                            "empty attributes");
+                }
+                return inboundAttributes;
+            }
+
+            Claim[] claimArray = userStore.getUserClaimValues(userAccountAssociationDTO.getUsername(), null);
+            if (claimArray == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Cannot get a valid claim set for the user: " + userAccountAssociationDTO
+                            .getUsername() + ", in domain: " + userAccountAssociationDTO.getDomain() + ", and in the "
+                            + "tenant domain: " + IdentityTenantUtil.getTenantDomain(tenantId) + ". Therefore returning " +
+                            "empty attributes");
+                }
+                return inboundAttributes;
+            }
+
+            for (Claim claim : claimArray) {
+                inboundAttributes.put(claim.getClaimUri(), claim.getValue());
+            }
+            return inboundAttributes;
+        } catch (UserStoreException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Unable to retrieve user claims of the user: " + userAccountAssociationDTO.getUsername() +
+                        ", in the domain: " + userAccountAssociationDTO.getDomain() + ", in the tenant domain: "
+                        + userAccountAssociationDTO.getTenantDomain());
+            }
+            throw handleUserAccountAssociationServerException(ERROR_WHILE_RETRIEVING_REQUIRED_USER_ATTRIBUTES, e, true);
+        }
+    }
+
+    private String getUserStoreDomain(UserAccountAssociationDTO userAccountAssociationDTO) {
+
+        String userStoreDomain = userAccountAssociationDTO.getDomain();
+        if (StringUtils.isEmpty(userStoreDomain)) {
+            userStoreDomain = PRIMARY_DEFAULT_DOMAIN_NAME;
+        }
+        return userStoreDomain;
     }
 }

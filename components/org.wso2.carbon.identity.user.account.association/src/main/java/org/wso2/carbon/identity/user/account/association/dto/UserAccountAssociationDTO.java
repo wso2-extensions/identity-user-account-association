@@ -23,6 +23,9 @@ public class UserAccountAssociationDTO {
     private String username;
     private String domain;
     private String tenantDomain;
+    private String firstName;
+    private String lastName;
+    private String email;
 
     public UserAccountAssociationDTO() {
     }
@@ -31,6 +34,17 @@ public class UserAccountAssociationDTO {
         this.username = username;
         this.domain = domain;
         this.tenantDomain = tenantDomain;
+    }
+
+    public UserAccountAssociationDTO(String username, String domain, String tenantDomain, String firstName,
+                                     String lastName, String email) {
+
+        this.username = username;
+        this.domain = domain;
+        this.tenantDomain = tenantDomain;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
     }
 
     public String getUsername() {
@@ -56,5 +70,34 @@ public class UserAccountAssociationDTO {
     public void setTenantDomain(String tenantDomain) {
         this.tenantDomain = tenantDomain;
     }
-    
+
+    public String getFirstName() {
+
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+
+        return email;
+    }
+
+    public void setEmail(String email) {
+
+        this.email = email;
+    }
 }
