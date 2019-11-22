@@ -78,6 +78,7 @@ import static org.wso2.carbon.identity.user.account.association.util.UserAccount
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.INVALID_TENANT_DOMAIN;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.SAME_ACCOUNT_CONNECTING_ERROR;
 import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.USER_NOT_AUTHENTIC;
+import static org.wso2.carbon.user.core.UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
 
 public class UserAccountConnectorImpl implements UserAccountConnector {
 
@@ -599,8 +600,9 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
                 return inboundAttributes;
             }
 
+            String userStoreDomain = getUserStoreDomain(userAccountAssociationDTO);
             UserStoreManager userStore = ((org.wso2.carbon.user.core.UserRealm) userRealm).getUserStoreManager()
-                    .getSecondaryUserStoreManager(userAccountAssociationDTO.getDomain());
+                    .getSecondaryUserStoreManager(userStoreDomain);
             if (userStore == null) {
                 if (log.isDebugEnabled()) {
                     log.debug("Cannot get a valid user store for the user: " + userAccountAssociationDTO
@@ -634,5 +636,14 @@ public class UserAccountConnectorImpl implements UserAccountConnector {
             }
             throw handleUserAccountAssociationServerException(ERROR_WHILE_RETRIEVING_REQUIRED_USER_ATTRIBUTES, e, true);
         }
+    }
+
+    private String getUserStoreDomain(UserAccountAssociationDTO userAccountAssociationDTO) {
+
+        String userStoreDomain = userAccountAssociationDTO.getDomain();
+        if (StringUtils.isEmpty(userStoreDomain)) {
+            userStoreDomain = PRIMARY_DEFAULT_DOMAIN_NAME;
+        }
+        return userStoreDomain;
     }
 }
