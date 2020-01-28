@@ -103,8 +103,11 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         tokReqMsgCtx.setAuthorizedUser(
                 OAuth2Util.getUserFromUserName(associatedUser.toFullQualifiedUsername()));
 
-        String[] allowedScopes =  getAllowedScopes(validationResponseDTO.getScope(),
-                tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
+        //This is commented to support account switching capability.
+        //https://github.com/wso2/product-is/issues/7385
+        //String[] allowedScopes =  getAllowedScopes(validationResponseDTO.getScope(),
+        //tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
+        String[] allowedScopes = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope();
         tokReqMsgCtx.setScope(allowedScopes);
 
         if (log.isDebugEnabled()) {
