@@ -28,7 +28,10 @@ import org.wso2.carbon.identity.user.account.association.exception.UserAccountAs
 import org.wso2.carbon.identity.user.account.association.internal.IdentityAccountAssociationServiceComponent;
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants;
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationUtil;
+import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.UserStoreConfigConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.sql.Connection;
@@ -132,6 +135,7 @@ public class UserAccountAssociationDAO {
 
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 preparedStatement.setString(1, associationKey);
+                List<String> disabledDomainNames = getDisabledDomainNames();
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -144,7 +148,9 @@ public class UserAccountAssociationDAO {
                                 (conUserName)) {
                             continue;
                         }
-
+                        if (isUserStoreDisabled(disabledDomainNames, conUserDomain)) {
+                            continue;
+                        }
                         UserAccountAssociationDTO associationDTO = new UserAccountAssociationDTO();
                         associationDTO.setUsername(conUserName);
                         associationDTO.setDomain(conUserDomain);
@@ -162,6 +168,47 @@ public class UserAccountAssociationDAO {
         }
 
         return accountAssociations;
+    }
+
+    /**
+     * Get the list of disabled userstore domains.
+     *
+     * @return List of disabled userstore domains.
+     * @throws UserStoreException Error in retrieving realm config.
+     */
+    private List<String> getDisabledDomainNames() throws UserStoreException {
+
+        RealmConfiguration realmConfig;
+        if (CarbonContext.getThreadLocalCarbonContext().getUserRealm() == null ||
+                (CarbonContext.getThreadLocalCarbonContext().getUserRealm().getRealmConfiguration() == null)) {
+            return new ArrayList<>();
+        }
+        realmConfig = CarbonContext.getThreadLocalCarbonContext().getUserRealm().getRealmConfiguration()
+                .getSecondaryRealmConfig();
+
+        List<String> disableDomainName = new ArrayList<>();
+        if (realmConfig != null) {
+            do {
+                if (Boolean.parseBoolean(realmConfig.getUserStoreProperty
+                        (UserCoreConstants.RealmConfig.USER_STORE_DISABLED))) {
+                    disableDomainName.add(realmConfig.getUserStoreProperty(UserStoreConfigConstants.DOMAIN_NAME));
+                }
+                realmConfig = realmConfig.getSecondaryRealmConfig();
+            } while (realmConfig != null);
+        }
+        return disableDomainName;
+    }
+
+    /**
+     * Check whether the given userstore is disabled or not.
+     *
+     * @param disabledDomainNames List of disabled userstore domains.
+     * @param userDomain          Userstore domain name.
+     * @return True if the given userstore is disabled and false if not.
+     */
+    private boolean isUserStoreDisabled(List<String> disabledDomainNames, String userDomain) {
+
+        return !disabledDomainNames.isEmpty() && disabledDomainNames.contains(userDomain);
     }
 
     /**
