@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.user.account.association.dao;
 
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.user.account.association.dto.UserAccountAssociationDTO;
@@ -28,7 +27,10 @@ import org.wso2.carbon.identity.user.account.association.exception.UserAccountAs
 import org.wso2.carbon.identity.user.account.association.internal.IdentityAccountAssociationServiceComponent;
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants;
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationUtil;
+import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.UserCoreConstants;
+import org.wso2.carbon.user.core.UserStoreConfigConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 
 import java.sql.Connection;
@@ -36,7 +38,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class UserAccountAssociationDAO {
 
@@ -132,6 +137,7 @@ public class UserAccountAssociationDAO {
 
                 realmService = IdentityAccountAssociationServiceComponent.getRealmService();
                 preparedStatement.setString(1, associationKey);
+                Set<String> disabledDomainNames = getDisabledDomainNames();
 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -144,7 +150,9 @@ public class UserAccountAssociationDAO {
                                 (conUserName)) {
                             continue;
                         }
-
+                        if (isUserStoreDisabled(disabledDomainNames, conUserDomain)) {
+                            continue;
+                        }
                         UserAccountAssociationDTO associationDTO = new UserAccountAssociationDTO();
                         associationDTO.setUsername(conUserName);
                         associationDTO.setDomain(conUserDomain);
@@ -162,6 +170,45 @@ public class UserAccountAssociationDAO {
         }
 
         return accountAssociations;
+    }
+
+    /**
+     * Get the list of disabled userstore domains.
+     *
+     * @return List of disabled userstore domains.
+     * @throws UserStoreException Error in retrieving realm config.
+     */
+    private Set<String> getDisabledDomainNames() throws UserStoreException {
+
+        RealmConfiguration realmConfig;
+        if (CarbonContext.getThreadLocalCarbonContext().getUserRealm() == null ||
+                (CarbonContext.getThreadLocalCarbonContext().getUserRealm().getRealmConfiguration() == null)) {
+            return Collections.emptySet();
+        }
+        realmConfig = CarbonContext.getThreadLocalCarbonContext().getUserRealm().getRealmConfiguration()
+                .getSecondaryRealmConfig();
+
+        Set<String> disabledDomainNames = new HashSet<>();
+        while (realmConfig != null) {
+            if (Boolean.parseBoolean(realmConfig.getUserStoreProperty
+                    (UserCoreConstants.RealmConfig.USER_STORE_DISABLED))) {
+                disabledDomainNames.add(realmConfig.getUserStoreProperty(UserStoreConfigConstants.DOMAIN_NAME));
+            }
+            realmConfig = realmConfig.getSecondaryRealmConfig();
+        }
+        return disabledDomainNames;
+    }
+
+    /**
+     * Check whether the given userstore is disabled or not.
+     *
+     * @param disabledDomainNames List of disabled userstore domains.
+     * @param userDomain          Userstore domain name.
+     * @return True if the given userstore is disabled and false if not.
+     */
+    private boolean isUserStoreDisabled(Set<String> disabledDomainNames, String userDomain) {
+
+        return !disabledDomainNames.isEmpty() && disabledDomainNames.contains(userDomain);
     }
 
     /**
