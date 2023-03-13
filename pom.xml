@@ -256,7 +256,7 @@
 
         <!--Carbon Identity Version-->
         <carbon.identity.framework.version>5.14.67</carbon.identity.framework.version>
-        <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 6.0.0)</carbon.identity.framework.imp.pkg.version.range>
+        <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 7.0.0)</carbon.identity.framework.imp.pkg.version.range>
 
         <!--OAuth Version-->
         <identity.inbound.auth.oauth.version>6.2.28</identity.inbound.auth.oauth.version>
