@@ -44,8 +44,8 @@ public class UserAccountAssociationUtil {
             String secretKey = UUIDGenerator.generateUUID();
             String baseString = UUIDGenerator.generateUUID();
 
-            SecretKeySpec key = new SecretKeySpec(secretKey.getBytes(), "HmacSHA1");
-            Mac mac = Mac.getInstance("HmacSHA1");
+            SecretKeySpec key = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
+            Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(key);
             byte[] rawHmac = mac.doFinal(baseString.getBytes());
             String random = Base64.encode(rawHmac);
