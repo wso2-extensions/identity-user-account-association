@@ -18,6 +18,8 @@ package org.wso2.carbon.identity.user.account.association.util;
 
 import org.apache.xml.security.utils.Base64;
 import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.identity.base.IdentityConstants;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException;
 import org.wso2.carbon.identity.user.account.association.internal.IdentityAccountAssociationServiceComponent;
 import org.wso2.carbon.registry.core.utils.UUIDGenerator;
@@ -44,8 +46,16 @@ public class UserAccountAssociationUtil {
             String secretKey = UUIDGenerator.generateUUID();
             String baseString = UUIDGenerator.generateUUID();
 
-            SecretKeySpec key = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
-            Mac mac = Mac.getInstance("HmacSHA256");
+            String hmacAlgorithm;
+            if (Boolean.parseBoolean(IdentityUtil.getProperty(IdentityConstants
+                    .USER_ACCOUNT_ASSOCIATION_ENABLE_SHA256_KEY))) {
+                hmacAlgorithm = "HmacSHA256";
+            } else {
+                hmacAlgorithm = "HmacSHA1";
+            }
+
+            SecretKeySpec key = new SecretKeySpec(secretKey.getBytes(), hmacAlgorithm);
+            Mac mac = Mac.getInstance(hmacAlgorithm);
             mac.init(key);
             byte[] rawHmac = mac.doFinal(baseString.getBytes());
             String random = Base64.encode(rawHmac);
