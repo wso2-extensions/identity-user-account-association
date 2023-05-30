@@ -22,7 +22,7 @@
         <groupId>org.wso2.carbon.identity.association.account</groupId>
         <artifactId>identity-user-account-association</artifactId>
         <relativePath>../../pom.xml</relativePath>
-        <version>5.5.3</version>
+        <version>5.5.4-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
