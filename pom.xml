@@ -255,7 +255,7 @@
         <osgi.framework.imp.pkg.version.range>[1.7.0, 2.0.0)</osgi.framework.imp.pkg.version.range>
 
         <!--Carbon Identity Version-->
-        <carbon.identity.framework.version>5.14.67</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.25.210</carbon.identity.framework.version>
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 7.0.0)</carbon.identity.framework.imp.pkg.version.range>
 
         <!--OAuth Version-->
