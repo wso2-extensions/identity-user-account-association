@@ -22,10 +22,11 @@ import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException;
 import org.wso2.carbon.identity.user.account.association.internal.IdentityAccountAssociationServiceComponent;
-import org.wso2.carbon.registry.core.utils.UUIDGenerator;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
+
+import java.util.UUID;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -43,8 +44,8 @@ public class UserAccountAssociationUtil {
      */
     public static String getRandomNumber() throws UserAccountAssociationException {
         try {
-            String secretKey = UUIDGenerator.generateUUID();
-            String baseString = UUIDGenerator.generateUUID();
+            String secretKey = UUID.randomUUID().toString();
+            String baseString = UUID.randomUUID().toString();
 
             String hmacAlgorithm;
             if (Boolean.parseBoolean(IdentityUtil.getProperty(IdentityConstants
