@@ -255,11 +255,11 @@
 
         <!--Carbon Identity Version-->
         <carbon.identity.framework.version>5.25.305</carbon.identity.framework.version>
-        <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 7.0.0)</carbon.identity.framework.imp.pkg.version.range>
+        <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 8.0.0)</carbon.identity.framework.imp.pkg.version.range>
 
         <!--OAuth Version-->
         <identity.inbound.auth.oauth.version>6.2.28</identity.inbound.auth.oauth.version>
-        <identity.inbound.auth.oauth.version.imp.pkg.version.range>[6.2.28, 7.0.0)
+        <identity.inbound.auth.oauth.version.imp.pkg.version.range>[6.2.28, 8.0.0)
         </identity.inbound.auth.oauth.version.imp.pkg.version.range>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
 
