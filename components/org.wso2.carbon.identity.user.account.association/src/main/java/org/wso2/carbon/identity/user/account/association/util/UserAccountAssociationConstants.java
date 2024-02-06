@@ -75,7 +75,10 @@ public class UserAccountAssociationConstants {
                 "user %s"),
         ERROR_RETRIEVING_TENANT_ID_OF_USER(8539, "Error while retrieving tenant ID of user"),
         ATTEMPTED_CROSS_TENANT_ASSOCIATION(8540, "Cross tenant association is not allowed"),
-        ERROR_WHILE_RETRIEVING_REQUIRED_USER_ATTRIBUTES(8541, "Error while retrieving required user attributes");
+        ERROR_WHILE_RETRIEVING_REQUIRED_USER_ATTRIBUTES(8541, "Error while retrieving required user attributes"),
+        ERROR_WHILE_RESOLVING_USER_ID(8542, "Error while resolving user id of the user"),
+        ERROR_WHILE_RESOLVING_USER_NAME(8543, "Error while resolving user name of the user"),
+        ERROR_WHILE_RESOLVING_TENANT_DOMAIN(8544, "Error while resolving tenant domain for the organization id");
 
         private final int code;
         private final String description;

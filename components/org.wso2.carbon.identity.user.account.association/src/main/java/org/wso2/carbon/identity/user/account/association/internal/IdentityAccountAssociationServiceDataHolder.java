@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2015-2024, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.user.account.association.internal;
 
 import org.osgi.framework.BundleContext;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.user.core.listener.UserStoreManagerListener;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -30,6 +31,8 @@ public class IdentityAccountAssociationServiceDataHolder {
 
     private BundleContext bundleContext;
     private RealmService realmService;
+    private OrganizationManager organizationManager;
+
     private Collection<UserStoreManagerListener> userStoreManagerListenerCollection;
     private Collection<UserOperationEventListener> userOperationEventListenerCollection;
     private Map<Integer, UserStoreManagerListener> userStoreManagerListeners;
@@ -130,4 +133,13 @@ public class IdentityAccountAssociationServiceDataHolder {
         this.userOperationEventListeners = userOperationEventListeners;
     }
 
+    public OrganizationManager getOrganizationManager() {
+
+        return organizationManager;
+    }
+
+    public void setOrganizationManager(OrganizationManager organizationManager) {
+
+        this.organizationManager = organizationManager;
+    }
 }

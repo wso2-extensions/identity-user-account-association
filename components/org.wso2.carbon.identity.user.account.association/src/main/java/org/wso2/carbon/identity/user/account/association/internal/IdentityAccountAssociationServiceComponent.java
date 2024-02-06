@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2015, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2015-2024, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.user.account.association.UserAccountConnector;
 import org.wso2.carbon.identity.user.account.association.UserAccountConnectorImpl;
 import org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException;
@@ -203,6 +204,24 @@ public class IdentityAccountAssociationServiceComponent {
     protected void setIdentityCoreInitializedEventService(IdentityCoreInitializedEvent identityCoreInitializedEvent) {
     /* reference IdentityCoreInitializedEvent service to guarantee that this component will wait until identity core
          is started */
+    }
+
+    @Reference(
+            name = "organization.management.service",
+            service = OrganizationManager.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetOrganizationManagementService")
+    protected void setOrganizationManagementService(OrganizationManager organizationManager) {
+
+        IdentityAccountAssociationServiceDataHolder.getInstance().setOrganizationManager(organizationManager);
+        log.debug("Set Organization Management Service");
+    }
+
+    protected void unsetOrganizationManagementService(OrganizationManager organizationManager) {
+
+        IdentityAccountAssociationServiceDataHolder.getInstance().setOrganizationManager(null);
+        log.debug("Unset Organization Management Service");
     }
 }
 
