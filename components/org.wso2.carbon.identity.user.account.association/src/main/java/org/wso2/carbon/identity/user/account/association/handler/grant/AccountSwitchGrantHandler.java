@@ -46,6 +46,7 @@ import org.wso2.carbon.identity.user.account.association.util.UserAccountAssocia
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.Arrays;
@@ -88,9 +89,10 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
 
         User authorizedUser = User.getUserFromUserName(validationResponseDTO.getAuthorizedUser());
         AccessTokenDO accessTokenDO = OAuth2Util.findAccessToken(token, false);
-        if (isSubOrganizationUser(accessTokenDO)) {
-            String authorizedUserName = resolveUserName(accessTokenDO.getAuthzUser().getUserResidentOrganization(),
-                    MultitenantUtils.getTenantAwareUsername(accessTokenDO.getAuthzUser().getUserName()));
+        if (accessTokenDO.getAuthzUser().isOrganizationUser()) {
+            // For organization SSO user, the user ID is set as the username attribute of the authenticated user object.
+            String userId = MultitenantUtils.getTenantAwareUsername(accessTokenDO.getAuthzUser().getUserName());
+            String authorizedUserName = resolveUserName(tenantDomain, userId);
             authorizedUser.setUserName(authorizedUserName);
             authorizedUser.setTenantDomain(
                     resolveTenantDomain(accessTokenDO.getAuthzUser().getUserResidentOrganization()));
@@ -123,15 +125,11 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
             return false;
         }
         AuthenticatedUser authenticatedUser = OAuth2Util.getUserFromUserName(associatedUser.toFullQualifiedUsername());
-        if (isSubOrganizationUser(accessTokenDO)) {
-            authenticatedUser.setAccessingOrganization(accessTokenDO.getAuthzUser().getAccessingOrganization());
-            authenticatedUser.setUserResidentOrganization(accessTokenDO.getAuthzUser().getUserResidentOrganization());
-            authenticatedUser.setFederatedUser(true);
-            authenticatedUser.setFederatedIdPName(accessTokenDO.getAuthzUser().getFederatedIdPName());
-            authenticatedUser.setTenantDomain(accessTokenDO.getAuthzUser().getTenantDomain());
+        if (accessTokenDO.getAuthzUser().isOrganizationUser()) {
+            authenticatedUser = new AuthenticatedUser(accessTokenDO.getAuthzUser());
             String userId = getUserId(username, tenantDomain);
             authenticatedUser.setUserId(userId);
-            authenticatedUser.setUserName(userId + "@" + accessTokenDO.getAuthzUser().getUserResidentOrganization());
+            authenticatedUser.setUserName(UserCoreUtil.addTenantDomainToEntry(userId, tenantDomain));
         }
 
         tokReqMsgCtx.setAuthorizedUser(authenticatedUser);
@@ -229,7 +227,7 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         return responseDTO;
     }
 
-    private String resolveUserName (String orgId, String userId) throws IdentityOAuth2Exception {
+    private String resolveUserName(String orgId, String userId) throws IdentityOAuth2Exception {
 
         try {
             String tenantDomain = resolveTenantDomain(orgId);
@@ -273,11 +271,5 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         RealmService realmService = IdentityAccountAssociationServiceComponent.getRealmService();
         org.wso2.carbon.user.api.UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
         return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
-    }
-
-    private boolean isSubOrganizationUser(AccessTokenDO accessTokenDO) {
-
-        return accessTokenDO.getAuthzUser().isFederatedUser() &&
-                accessTokenDO.getAuthzUser().getUserResidentOrganization() != null;
     }
 }
