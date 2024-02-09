@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2019 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2015-2024, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -9,10 +9,10 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
+ * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- *  specific language governing permissions and limitations
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
  * under the License.
  */
 
@@ -21,24 +21,40 @@ package org.wso2.carbon.identity.user.account.association.handler.grant;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.model.User;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.ResponseHeader;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
+import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.model.RequestParameter;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.AbstractAuthorizationGrantHandler;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
+import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.user.account.association.UserAccountConnectorImpl;
 import org.wso2.carbon.identity.user.account.association.dto.UserAccountAssociationDTO;
 import org.wso2.carbon.identity.user.account.association.exception.UserAccountAssociationException;
+import org.wso2.carbon.identity.user.account.association.internal.IdentityAccountAssociationServiceComponent;
+import org.wso2.carbon.identity.user.account.association.internal.IdentityAccountAssociationServiceDataHolder;
 import org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.AccountSwitchGrant;
+import org.wso2.carbon.user.api.UserStoreException;
+import org.wso2.carbon.user.core.common.AbstractUserStoreManager;
+import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.Arrays;
 import java.util.HashSet;
+
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_RESOLVING_TENANT_DOMAIN;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_RESOLVING_USER_ID;
+import static org.wso2.carbon.identity.user.account.association.util.UserAccountAssociationConstants.ErrorMessages.ERROR_WHILE_RESOLVING_USER_NAME;
 
 /**
  * Implements the AuthorizationGrantHandler for the AccountSwitchGrant Type : account-switch.
@@ -72,6 +88,15 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         }
 
         User authorizedUser = User.getUserFromUserName(validationResponseDTO.getAuthorizedUser());
+        AccessTokenDO accessTokenDO = OAuth2Util.findAccessToken(token, false);
+        if (accessTokenDO.getAuthzUser().isOrganizationUser()) {
+            // For organization SSO user, the user ID is set as the username attribute of the authenticated user object.
+            String userId = MultitenantUtils.getTenantAwareUsername(accessTokenDO.getAuthzUser().getUserName());
+            String authorizedUserName = resolveUserName(tenantDomain, userId);
+            authorizedUser.setUserName(authorizedUserName);
+            authorizedUser.setTenantDomain(
+                    resolveTenantDomain(accessTokenDO.getAuthzUser().getUserResidentOrganization()));
+        }
 
         User associatedUser = new User();
         associatedUser.setUserName(username);
@@ -99,9 +124,15 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
 
             return false;
         }
+        AuthenticatedUser authenticatedUser = OAuth2Util.getUserFromUserName(associatedUser.toFullQualifiedUsername());
+        if (accessTokenDO.getAuthzUser().isOrganizationUser()) {
+            authenticatedUser = new AuthenticatedUser(accessTokenDO.getAuthzUser());
+            String userId = getUserId(username, tenantDomain);
+            authenticatedUser.setUserId(userId);
+            authenticatedUser.setUserName(UserCoreUtil.addTenantDomainToEntry(userId, tenantDomain));
+        }
 
-        tokReqMsgCtx.setAuthorizedUser(
-                OAuth2Util.getUserFromUserName(associatedUser.toFullQualifiedUsername()));
+        tokReqMsgCtx.setAuthorizedUser(authenticatedUser);
 
         //This is commented to support account switching capability.
         //https://github.com/wso2/product-is/issues/7385
@@ -196,4 +227,49 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         return responseDTO;
     }
 
+    private String resolveUserName(String orgId, String userId) throws IdentityOAuth2Exception {
+
+        try {
+            String tenantDomain = resolveTenantDomain(orgId);
+            return OAuth2Util.resolveUsernameFromUserId(tenantDomain, userId);
+        } catch (UserStoreException e) {
+            throw new IdentityOAuth2Exception(String.valueOf(ERROR_WHILE_RESOLVING_USER_NAME.getCode()),
+                    ERROR_WHILE_RESOLVING_USER_NAME.getDescription(), e);
+        }
+    }
+
+    private String resolveTenantDomain(String orgId) throws IdentityOAuth2Exception {
+
+        try {
+            return getOrganizationManager().resolveTenantDomain(orgId);
+        } catch (OrganizationManagementException e) {
+            throw new IdentityOAuth2Exception(String.valueOf(ERROR_WHILE_RESOLVING_TENANT_DOMAIN.getCode()),
+                    ERROR_WHILE_RESOLVING_TENANT_DOMAIN.getDescription(), e);
+        }
+    }
+
+    private OrganizationManager getOrganizationManager() {
+
+        return IdentityAccountAssociationServiceDataHolder.getInstance().getOrganizationManager();
+    }
+
+    private String getUserId(String userName, String tenantDomain) throws IdentityOAuth2Exception {
+
+        try {
+            int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
+            AbstractUserStoreManager userStoreManager = getAbstractUserStoreManager(tenantId);
+            return userStoreManager.getUserIDFromUserName(userName);
+        } catch (UserStoreException | UserAccountAssociationException e) {
+            throw new IdentityOAuth2Exception(String.valueOf(ERROR_WHILE_RESOLVING_USER_ID.getCode()),
+                    ERROR_WHILE_RESOLVING_USER_ID.getDescription(), e);
+        }
+    }
+
+    private AbstractUserStoreManager getAbstractUserStoreManager(int tenantId)
+            throws UserStoreException, UserAccountAssociationException {
+
+        RealmService realmService = IdentityAccountAssociationServiceComponent.getRealmService();
+        org.wso2.carbon.user.api.UserRealm tenantUserRealm = realmService.getTenantUserRealm(tenantId);
+        return (AbstractUserStoreManager) tenantUserRealm.getUserStoreManager();
+    }
 }
