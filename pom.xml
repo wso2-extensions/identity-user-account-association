@@ -162,7 +162,13 @@
                 <version>${pax.logging.api.version}</version>
             </dependency>
 
-        </dependencies>
+        
+            <dependency>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+            </dependency>
+</dependencies>
     </dependencyManagement>
 
     <build>
@@ -198,7 +204,27 @@
                         <doUpdate>false</doUpdate>
                     </configuration>
                 </plugin>
-            </plugins>
+            
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+</plugins>
         </pluginManagement>
 
         <plugins>
@@ -247,7 +273,27 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
+        
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+</plugins>
     </build>
 
     <properties>
@@ -306,7 +352,9 @@
 
         <!-- Pax Logging Version -->
         <pax.logging.api.version>1.10.1</pax.logging.api.version>
-    </properties>
+    
+        <jacoco.version>0.8.6</jacoco.version>
+</properties>
 
     <modules>
         <module>components/org.wso2.carbon.identity.user.account.association</module>
