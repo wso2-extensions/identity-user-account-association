@@ -335,7 +335,7 @@
         <carbon.identity.framework.imp.pkg.version.range>[5.14.67, 8.0.0)</carbon.identity.framework.imp.pkg.version.range>
 
         <!--OAuth Version-->
-        <identity.inbound.auth.oauth.version>7.0.5</identity.inbound.auth.oauth.version>
+        <identity.inbound.auth.oauth.version>7.0.155</identity.inbound.auth.oauth.version>
         <identity.inbound.auth.oauth.version.imp.pkg.version.range>[6.2.28, 8.0.0)
         </identity.inbound.auth.oauth.version.imp.pkg.version.range>
         <oltu.package.import.version.range>[1.0.0, 2.0.0)</oltu.package.import.version.range>
