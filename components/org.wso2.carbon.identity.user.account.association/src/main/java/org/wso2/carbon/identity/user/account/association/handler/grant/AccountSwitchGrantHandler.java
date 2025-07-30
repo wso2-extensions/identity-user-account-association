@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2024, WSO2 LLC. (http://www.wso2.com).
+ * Copyright (c) 2015-2025, WSO2 LLC. (http://www.wso2.com).
  *
  * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -227,10 +227,9 @@ public class AccountSwitchGrantHandler extends AbstractAuthorizationGrantHandler
         return responseDTO;
     }
 
-    private String resolveUserName(String orgId, String userId) throws IdentityOAuth2Exception {
+    private String resolveUserName(String tenantDomain, String userId) throws IdentityOAuth2Exception {
 
         try {
-            String tenantDomain = resolveTenantDomain(orgId);
             return OAuth2Util.resolveUsernameFromUserId(tenantDomain, userId);
         } catch (UserStoreException e) {
             throw new IdentityOAuth2Exception(String.valueOf(ERROR_WHILE_RESOLVING_USER_NAME.getCode()),
