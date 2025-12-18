@@ -362,7 +362,7 @@
 
         <wss4j.xml.security.imp.pkg.version.range>[2.1.7,2.4.0)</wss4j.xml.security.imp.pkg.version.range>
 
-        <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
+        <imp.pkg.version.javax.servlet>[3.1.0, 4.0.0)</imp.pkg.version.javax.servlet>
         <axiom.wso2.version>1.2.11-wso2v16</axiom.wso2.version>
 
         <maven.bundle.plugin.version>3.2.0</maven.bundle.plugin.version>
