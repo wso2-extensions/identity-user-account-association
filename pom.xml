@@ -351,7 +351,7 @@
         <carbon.commons.version>4.7.11</carbon.commons.version>
 
         <!--Axis2 Version -->
-        <axis2.osgi.version.range>[1.6.1-wso2v38, 2.0.0)</axis2.osgi.version.range>
+        <axis2.osgi.version.range>[1.6.1, 2.0.0)</axis2.osgi.version.range>
         <axis2.wso2.version>1.6.1-wso2v38</axis2.wso2.version>
 
         <!-- Commons -->
